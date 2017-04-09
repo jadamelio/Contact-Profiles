@@ -106,11 +106,131 @@ def generateBaseline(originalPath,scaffoldPath, vdwDataPath, blastCap, xOffset, 
 	#arrayGraphToHist(baseGraph, savePath + "baseProfile.png")
 	print "		Textographing... :D"
 	#graphToText(baseGraph, savePath +" baseProfile.txt")
-	graphFromFileToScatter(l, savePath + "P.baseProfile.png")
+	analyticalGraphFromFileToScatter(l, savePath + "P.baseProfile.png", "blue")
 	#shutil.rmtree(temp)
 	#return baseGraph
 
 
+def getMinMaxList(xList,yList):
+
+	#removes all plateaus, replaces with single point
+	blastIndex = []
+	counter  = 0
+	while True:
+		#print len(yList)
+		#print len(xList)
+		label = 0
+		for i in range(1, len(xList)-1):
+			#print i, len(xList)
+			if i + 1 == len(xList)-1:
+				break
+			try: 
+				#print i
+				if yList[i] == yList[i+1] and yList[i] == yList[i-1]:
+					#print '---'
+					#print i,  len(yList)
+					#print len(xList)
+					#print "hi"
+					xList.pop(i-1)
+					#print "looo", xList[i+1]
+					xList.pop(i+1)
+					yList.pop(i-1)
+					yList.pop(i+1)
+					#print "////"
+					counter += 1
+					label = 1
+
+					#print len(yList)
+					#print len(xList)
+					#print '---'
+					#i == i - 2
+				elif yList[i] == yList[i+1]:
+					#print "ho"
+					yList[i] = (yList[i]+yList[i+1])/2
+					xList[i] = (xList[i]+xList[i+1])/2
+					xList.pop(i+1)
+					yList.pop(i+1)
+					counter += 1
+					label = 1
+				#	print len(yList)
+					#print len(xList)
+					#i  == i - 1
+				elif yList[i] == yList[i-1]:
+					#print "lets go"
+					yList[i] = (yList[i]+yList[i-1])/2
+					xList[i] = (xList[i]+xList[i-1])/2
+					xList.pop(i-1)
+					yList.pop(i-1)
+					counter += 1
+					label = 1
+				#	print len(yList)
+				#	print len(xList)
+					#i  == i - 1
+			except IndexError:
+				#break
+				pass
+		
+		if label == 0:
+			break
+	#print len(yList)
+	#print len(xList)
+	while True:
+		if yList[0] == yList[len(yList)-1]:
+				yList[0] =(yList[0]+yList[len(yList)-1])/2
+				xList[0] = -(-xList[0]+xList[len(yList)-1])/2
+				yList.pop(len(yList)-1)
+				xList.pop(len(yList)-1)	
+				counter +=1	
+		else:
+			break
+	print "Removed " + str(counter) + "data points!"
+	#print len(xList)
+	#print len(yList)
+	minMaxListA = []
+	minMaxListD = []
+	identity = []
+	#print xList
+
+	#print yList[len(yList)-1], yList[0],  yList[1] 
+	if yList[0] < yList[1] and yList[0] < yList[len(yList)-1]:
+		#print "hi"
+		minMaxListD.append(yList[0])
+
+		minMaxListA.append(xList[0])
+		identity.append(1)
+	elif yList[0] > yList[1] and yList[0] > yList[len(yList)-1]:
+		minMaxListD.append(yList[0])
+		minMaxListA.append(xList[0])
+		identity.append(-1)
+
+	for i in range(1, len(xList)-1):
+		if yList[i] < yList[i+1] and yList[i] < yList[i-1]:
+			minMaxListD.append(yList[i])
+			minMaxListA.append(xList[i])
+			identity.append(1)
+		elif yList[i] > yList[i+1] and yList[i] > yList[i-1]:
+			minMaxListD.append(yList[i])
+			minMaxListA.append(xList[i])
+			identity.append(-1)
+
+
+	if yList[len(yList)-1] < yList[0] and yList[len(yList)-1] < yList[len(yList)-2]:
+		minMaxListD.append(yList[len(yList)-1])
+		minMaxListA.append(xList[len(yList)-1])
+		identity.append(1)
+	elif yList[len(yList)-1] > yList[0] and yList[len(yList)-1] > yList[len(yList)-2]:
+		minMaxListD.append(yList[len(yList)-1])
+		minMaxListA.append(xList[len(yList)-1])
+		identity.append(-1)
+	#print yList
+	#print yList[len(yList)-2] , yList[len(yList)-1],yList[0],yList[1]
+	#print identity
+	matplotlib.pyplot.scatter(minMaxListA,minMaxListD, color = "blue")
+	matplotlib.pyplot.grid(b =True, which = 'major', linestyle = '-')
+	matplotlib.pyplot.yticks(numpy.arange(3, 7+1, .5))
+	matplotlib.pyplot.xticks(numpy.arange(-180, 180+1, 30))
+	#matplotlib.pyplot.show()
+	return [minMaxListA, minMaxListD, identity]
 
 def subtractGraph(baseLineGraph, subtractingGraph):
 	
@@ -264,8 +384,8 @@ def graphFromFileToScatter(path, savePath):
 	file.close()
 	matplotlib.pyplot.scatter(angle,dist)
 	matplotlib.pyplot.grid(b =True, which = 'major', linestyle = '-', color = 'b')
-	matplotlib.pyplot.yticks(numpy.arange(4, 7+1, .1))
-	matplotlib.pyplot.xticks(numpy.arange(0, 360+1, 5))
+	matplotlib.pyplot.yticks(numpy.arange(0, 7+1, .5))
+	matplotlib.pyplot.xticks(numpy.arange(-180, 180+1, 20))
 	#matplotlib.pyplot.show()
 	matplotlib.pyplot.savefig(savePath)
 	#matplotlib.pyplot.
@@ -344,7 +464,121 @@ def oldmain(): #lol!
 				textFiles.append(graphToText(currentGraph,libraries[i] + "/" +files[j][:-3]  + ".txt "))
 				
 
+def analyticalGraphFromFileToScatter(path, savePath, colorA):
+	angle = []
+	dist = []
+	file = open(path, 'r')
+	while True:
+		try:
+			readIn = file.next().split()
+			#print readIn
+		#	print readIn
+			if readIn[2] > 0:
+				angle.append(float(readIn[0]))
+				dist.append(float(readIn[1]))
+		except StopIteration:
+			break
+	file.close()
+ 	average = 0.0 
+ 	
+ 	for i in range(len(dist)):
+ 		average += dist[i]
+ 	average = average/len(dist)
+ 	SD = 0.0
+ 	for i in range(len(dist)):
+ 		SD += (dist[i] - average)*(dist[i] - average)
+ 	SD = SD/len(dist)
+ 	RSD = 100.0*(SD/average)
+ 	#print path
+ 	#print(len(angle))
+ 	#print(len(dist))
+ 	bminMaxList = getMinMaxList(angle,dist)
+ 	minMaxListA = bminMaxList[0]
+ 	minMaxListD = bminMaxList[1]
+ 	minMaxListI = bminMaxList[2]
+ 	baverage = 0.0 
 
+ 	
+ 	for i in range(len(minMaxListD)):
+ 		baverage += minMaxListD[i]
+ 	baverage = baverage/len(minMaxListD)
+ 	bSD = 0.0
+ 	for i in range(len(minMaxListD)):
+ 		bSD += (minMaxListD[i] - baverage)*(minMaxListD[i] - baverage)
+ 	bSD = bSD/len(minMaxListD)
+ 	bRSD = 100.0*(bSD/baverage)
+ 	#print  baverage, bSD, bRSD
+ #	print baverage- bSD
+
+ 	minsA = []
+ 	minsD = []
+ 	#print minMaxListI
+ 	deepOneIndex = -1
+ 	deepTwoIndex = -1
+ 	toBeat = 200
+ 	for i in range(len(minMaxListD)):
+ 		if minMaxListD[i] < toBeat:
+ 			deepOneIndex = i
+ 			toBeat = minMaxListD[i]
+ 	toBeat = 200
+ 	for i in range(len(minMaxListD)):
+ 		if minMaxListD[i] < toBeat and i != deepOneIndex:
+ 			deepTwoIndex = i
+ 			toBeat = minMaxListD[i]
+
+ 	print minMaxListA[deepOneIndex],minMaxListA[deepTwoIndex]
+ 	if  0 - minMaxListA[deepOneIndex] >  0-minMaxListA[deepTwoIndex]:
+ 		furthestMin = minMaxListA[deepOneIndex]
+ 		closestMin = minMaxListA[deepTwoIndex]
+ 	else:
+ 		furthestMin = minMaxListA[deepTwoIndex]
+ 		closestMin = minMaxListA[deepOneIndex]
+ 	
+
+ 	stringA = 'Far Min: \n' + str(furthestMin) +" , " + str(dist[angle.index(furthestMin)]) + "\n " + str((dist[angle.index(furthestMin)]+1 +  dist[angle.index(furthestMin)]-1)/2)
+ 	stringB = 'Far Min: \n' + str(furthestMin) +" , " + str(dist[angle.index(furthestMin)]) + "\n " + str((dist[angle.index(furthestMin)]+1 +  dist[angle.index(furthestMin)]-1)/2)
+ 	stringC = 'Close Min: \n' + str(closestMin) +" , " + str(dist[angle.index(closestMin)]) + "\n " + str((dist[angle.index(closestMin)]+1 +  dist[angle.index(closestMin)]-1)/2)
+	 
+ 	angle = []
+	dist = []
+	file = open(path, 'r')
+	while True:
+		try:
+			readIn = file.next().split()
+			#print readIn
+		#	print readIn
+			if readIn[2] > 0:
+				angle.append(float(readIn[0]))
+				dist.append(float(readIn[1]))
+		except StopIteration:
+			break
+	file.close()
+
+
+ 	matplotlib.pyplot.scatter(angle,dist, color = colorA)
+	matplotlib.pyplot.grid(b =True, which = 'major', linestyle = '-')
+	matplotlib.pyplot.yticks(numpy.arange(3, 7+1, .5))
+	matplotlib.pyplot.xticks(numpy.arange(-180, 180+1, 30))
+	
+	if furthestMin < 0:
+		matplotlib.pyplot.annotate(stringA, xy=(furthestMin+30, 3.2), xycoords='data',bbox = dict(boxstyle="square,pad=0.3", fc ="white" ))
+	
+	else:
+		matplotlib.pyplot.annotate(stringB, xy=(furthestMin-30, 3.2), xycoords='data',bbox = dict(boxstyle="square,pad=0.3", fc ="white" ))
+	
+	matplotlib.pyplot.annotate(stringC, xy=(closestMin, 3.2), xycoords='data',bbox = dict(boxstyle="square,pad=0.3", fc ="white" ))
+	#matplotlib.pyplot.annotate('Average: ' + str(average) +" A\n" + "SD: " + str(SD) + " A \n" + "RSD: " + str(RSD) +" A", xy=(-180, 7), xycoords='data',bbox = dict(boxstyle="square,pad=0.3", fc ="white" ))
+	#ax= matplotlib.pyplot.figure().add_subplot(111)
+	#dist[angle.index(closestMin)]+1 +  dist[angle.index(closestMin)]-1)/2
+	#ax.annotate('local max',  xytext=(2.5, -100), dict())
+
+
+	#matplotlib.pyplot.show()
+	matplotlib.pyplot.savefig(savePath)
+	#matplotlib.pyplot.show()
+	matplotlib.pyplot.clf()
+	matplotlib.pyplot.cla()
+	matplotlib.pyplot.close()
 
 def digitalize(graph):
 	for i in range(len(graph)):
@@ -390,7 +624,7 @@ def main():
 
 
 	#mainCentroid = stacking.centroid(neomonomer)
-	lines = []
+	ogLines = []
 	woo = []
 	waste = neomonomer.next()
 	waste = neomonomer.next()
@@ -399,19 +633,38 @@ def main():
 		try:
 			#print "loop"
 			readIn = neomonomer.next().split()
-			lines.append(readIn)
+			ogLines.append(readIn)
 		except StopIteration:
 			#print "break"
 
 			break
 	counter = 0
 	combolists = []
-	for i in range(len(lines)):
+	for i in range(len(ogLines)):
 		##print lines[i][0]
+		lines = list(ogLines)
 		if lines[i][0] == "H":
 			os.mkdir("lib/site" + str(counter))
 			#print "In der"
 			lines[i][0] = "F"
+			deathY = lines[i][1]
+			hand = ""
+			if lines[i][1] < 0:
+				hand = "left"
+			else:
+				hand = "right"
+			
+
+			#print deathY
+			for cc in range(len(lines)):
+				
+				#print float(lines[cc][2]) - float(deathY)
+				
+				if lines[cc][0] == "H" and float(lines[cc][2]) - float(deathY) < .001:
+					
+					lines = lines[:cc] + lines[cc+1:]
+					break
+
 			tempXYZ = open("lib/site" + str(counter)+ '/node' + str(counter) + "xyz.xyz", 'w')
 			tempXYZ.write(str(len(lines))+ "\n")
 			tempXYZ.write( "\n")
@@ -441,6 +694,34 @@ def main():
 			lines[i][0] = "H"
 			print "Chasing those chemicals apart..."
 			chems = SMILES.isolateChemicals(b,True,True,"lib/site" + str(counter),argv[1] ) 
+			print "Here I am, rock you like a hurricane"
+			print chems
+			print hand
+			for bb in range(len(chems)):
+				print chems[bb][:-4] + ".xyz"
+				SMILES.normalize(chems[bb][:-4] + ".xyz", stacking.centroid(argv[1]))
+				bbcentroid = stacking.centroid(chems[bb][:-4] + ".xyz")
+				print bbcentroid
+				if hand == 'left':
+					if bbcentroid[0] < .001:
+						print "We good"
+						waste = 0
+					else:
+						print "Spin Factor 1"
+						SMILES.spinXY(chems[bb][:-4] + ".xyz", 180)
+						#SMILES.generateSVGFromXYZ(chems[bb][:-4] + ".xyz")
+				elif hand == 'right':
+					if bbcentroid[0] > -.001:
+						print "We good"
+						waste = 0
+					else:
+						#SMILES.generateSVGFromXYZ(chems[bb][:-4] + ".xyz")
+						print "Spin Factor 2"
+						SMILES.spinXY(chems[bb][:-4] + ".xyz", 180)
+				
+				bbcentroid = stacking.centroid(chems[bb][:-4] + ".xyz")
+				print bbcentroid
+				SMILES.normalize(chems[bb][:-4] + ".xyz")
 			blastCap = "B"
 			xOffset = 0
 			yOffset = 0
@@ -469,7 +750,7 @@ def main():
 				#currentGraph = subtractGraph(baseline, digitalize( stacking.graphAnglebyOffset(chems[i][:-3]+ "xyz", vdwRadPath, blastCap, xOffset, yOffset, numSheests)))
 				f =stacking.precisionGraph(chems[i][:-4]+ ".xyz", vdwRadPath, .1, 0,0,2)
 				g =coordsToText(f, "lib/site" + str(counter)+"/P.textGraph" + str(i) + ".txt")
-				graphFromFileToScatter("lib/site" + str(counter)+"/P.textGraph" + str(i) + ".txt", "lib/site" + str(counter)+"/P.graph" +str(i)+".png")
+				analyticalGraphFromFileToScatter("lib/site" + str(counter)+"/P.textGraph" + str(i) + ".txt", "lib/site" + str(counter)+"/P.graph" +str(i)+".png", "blue")
 
 				
 				#arrayGraphToHist(currentGraph, "lib/site" + str(counter)+"/graph" + str(i))

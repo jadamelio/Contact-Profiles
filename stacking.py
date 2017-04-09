@@ -338,7 +338,7 @@ def writeXYZ(framework, savePath):
 def precisionGraph(monomerPath, vdwDataPath, errorMargin, xOffset,yOffset,numSheests):
 	coords = []
 	print "		Precision Graph enter: "
-	for iAngle in range(0,360):
+	for iAngle in range(-180,180):
 		coords.append([iAngle,searchContact(monomerPath, vdwDataPath, iAngle, errorMargin, xOffset,yOffset,numSheests)])
 	#print coords
 	print "		Precision graph exit: "
@@ -371,7 +371,7 @@ def searchContact(monomerPath, vdwDataPath, angle, errorMargin, xOffset,yOffset,
 		d = distanceMeasureAllValue(c)
 		if len(d[0]) > 0:
 			farthestContact = dist
-			dist += .01
+			dist += 2
 		
 		else:
 			break
